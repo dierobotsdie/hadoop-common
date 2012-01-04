@@ -99,6 +99,7 @@ public class NamenodeFsck {
   private boolean showBlocks = false;
   private boolean showLocations = false;
   private boolean showRacks = false;
+  private boolean beAnnoying = false;
   private int fixing = FIXING_NONE;
   private String path = "/";
   
@@ -131,6 +132,7 @@ public class NamenodeFsck {
     for (Iterator<String> it = pmap.keySet().iterator(); it.hasNext();) {
       String key = it.next();
       if (key.equals("path")) { this.path = pmap.get("path")[0]; }
+      else if (key.equals("annoying")) { this.beAnnoying = true; }
       else if (key.equals("move")) { this.fixing = FIXING_MOVE; }
       else if (key.equals("delete")) { this.fixing = FIXING_DELETE; }
       else if (key.equals("files")) { this.showFiles = true; }
@@ -238,10 +240,10 @@ public class NamenodeFsck {
     } else if (showFiles) {
       out.print(path + " " + fileLen + " bytes, " +
         blocks.locatedBlockCount() + " block(s): ");
-    } else {
+    } else if (beAnnoying) {
       out.print('.');
     }
-    if (res.totalFiles % 100 == 0) { out.println(); out.flush(); }
+    if ((beAnnoying) && (res.totalFiles % 100 == 0)) { out.println(); out.flush(); }
     int missing = 0;
     int corrupt = 0;
     long missize = 0;

@@ -82,8 +82,9 @@ public class DFSck extends Configured implements Tool {
    * Print fsck usage information
    */
   static void printUsage() {
-    System.err.println("Usage: DFSck <path> [-move | -delete | -openforwrite] [-files [-blocks [-locations | -racks]]]");
+    System.err.println("Usage: DFSck <path> [-annoying | -move | -delete | -openforwrite] [-files [-blocks [-locations | -racks]]]");
     System.err.println("\t<path>\tstart checking from this path");
+    System.err.println("\t-annoying\tmake fsck's output as annoying as possible");
     System.err.println("\t-move\tmove corrupted files to /lost+found");
     System.err.println("\t-delete\tdelete corrupted files");
     System.err.println("\t-files\tprint out files being checked");
@@ -128,6 +129,7 @@ public class DFSck extends Configured implements Tool {
           url.append(URLEncoder.encode(dir, "UTF-8"));
           for (int idx = 0; idx < args.length; idx++) {
             if (args[idx].equals("-move")) { url.append("&move=1"); }
+            else if (args[idx].equals("-annoying")) { url.append("&annoying=1"); }
             else if (args[idx].equals("-delete")) { url.append("&delete=1"); }
             else if (args[idx].equals("-files")) { url.append("&files=1"); }
             else if (args[idx].equals("-openforwrite")) { url.append("&openforwrite=1"); }
