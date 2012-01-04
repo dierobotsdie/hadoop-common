@@ -61,12 +61,20 @@ if [ "$HOSTLIST" = "" ]; then
   fi
 fi
 
-for slave in `cat "$HOSTLIST"|sed  "s/#.*$//;/^$/d"`; do
- ssh $HADOOP_SSH_OPTS $slave $"${@// /\\ }" \
-   2>&1 | sed "s/^/$slave: /" &
- if [ "$HADOOP_SLAVE_SLEEP" != "" ]; then
-   sleep $HADOOP_SLAVE_SLEEP
- fi
-done
+if [ -e '/usr/bin/pdsh' ]; then
+
+  pdsh -w ^${HOSTLIST} -x^${HADOOP_CONF_DIR}/dfs.exclude,^${HADOOP_CONF_DIR}/mapred.exclude $"${@// /\\ }" 2>&1
+
+else
+
+  for slave in `cat "$HOSTLIST"|sed  "s/#.*$//;/^$/d"`; do
+   ssh $HADOOP_SSH_OPTS $slave $"${@// /\\ }" \
+     2>&1 | sed "s/^/$slave: /" &
+   if [ "$HADOOP_SLAVE_SLEEP" != "" ]; then
+     sleep $HADOOP_SLAVE_SLEEP
+   fi
+  done
+
+fi
 
 wait
