@@ -47,7 +47,7 @@
 #   HADOOP_ROOT_LOGGER The root appender. Default is INFO,console
 #
 
-bin=`dirname "$0"`
+bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 
 if [ -e "$bin"/../libexec/hadoop-config.sh ]; then
@@ -107,12 +107,7 @@ if [ "$COMMAND" == "datanode" ] && [ "$EUID" -eq 0 ] && [ -n "$HADOOP_SECURE_DN_
 fi
 
 # some Java parameters
-if [ "$JAVA_HOME" != "" ]; then
-  #echo "run java in $JAVA_HOME"
-  JAVA_HOME=$JAVA_HOME
-fi
-  
-if [ "$JAVA_HOME" = "" ]; then
+if [ -z $JAVA_HOME ]; then
   echo "Error: JAVA_HOME is not set."
   exit 1
 fi
@@ -157,7 +152,7 @@ if [ -e $HADOOP_PREFIX/share/hadoop/hadoop-core-* ]; then
   if [ -d "$HADOOP_PREFIX/share/hadoop/webapps" ]; then
     CLASSPATH=${CLASSPATH}:$HADOOP_PREFIX/share/hadoop
   fi
-  for f in $HADOOP_PREFIX/share/hadoop/hadoop-core-*.jar; do
+  for f in "$HADOOP_PREFIX/share/hadoop/hadoop-core-*.jar; do
     CLASSPATH=${CLASSPATH}:$f;
   done
 

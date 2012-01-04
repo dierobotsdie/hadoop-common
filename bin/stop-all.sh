@@ -18,7 +18,7 @@
 
 # Stop all hadoop daemons.  Run this on master node.
 
-bin=`dirname "$0"`
+bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 
 if [ -e "$bin/../libexec/hadoop-config.sh" ]; then

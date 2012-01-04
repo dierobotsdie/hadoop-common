@@ -18,7 +18,7 @@
 
 # Stop hadoop job history daemon.  Run this on the node where history server is running
 
-bin=`dirname "$0"`
+bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 
 if [ -e "$bin/../libexec/hadoop-config.sh" ]; then
