@@ -546,7 +546,7 @@ public class TrackerDistributedCacheManager {
     //
     // This field should be accessed under global cachedArchives lock.
     //
-    private int refcount;    // number of instances using this cache
+    private volatile int refcount;    // number of instances using this cache
 
     //
     // The following two fields should be accessed under
@@ -588,12 +588,14 @@ public class TrackerDistributedCacheManager {
     
     public synchronized void incRefCount() {
       refcount += 1;
+      LOG.debug(localizedLoadPath+": refcount="+refcount);
     }
 
     public void decRefCount() {
       synchronized (cachedArchives) {
         synchronized (this) {
           refcount -= 1;
+          LOG.debug(localizedLoadPath+": refcount="+refcount);
           if(refcount <= 0) {
             String key = this.key;
             cachedArchives.remove(key);
@@ -608,6 +610,7 @@ public class TrackerDistributedCacheManager {
     }
 
     public synchronized boolean isUsed() {
+      LOG.debug(localizedLoadPath+": refcount="+refcount);
       return refcount > 0;
     }
 
@@ -641,7 +644,7 @@ public class TrackerDistributedCacheManager {
         try {
           localFs.delete(f.getValue().localizedLoadPath, true);
         } catch (IOException ie) {
-          LOG.debug("Error cleaning up cache", ie);
+          LOG.debug("Error cleaning up cache ("+f.getValue().localizedLoadPath+")", ie);
         }
       }
       cachedArchives.clear();
@@ -968,6 +971,13 @@ public class TrackerDistributedCacheManager {
       synchronized (properties) {
         for (Map.Entry<Path, CacheDir> baseDir : properties.entrySet()) {
           CacheDir baseDirCounts = baseDir.getValue();
+          CacheStatus cacheStat=cachedArchives.get(baseDir.getKey());
+          if (cacheStat != null) {
+             Path localizedDir = cacheStat.getLocalizedUniqueDir();
+             LOG.debug(localizedDir+": allowedCacheSize < baseDirCounts.size = " + allowedCacheSize + " < " + baseDirCounts.size);
+             LOG.debug(localizedDir+": allowedCacheSubdirs < baseDirCounts.subdirs = " + allowedCacheSubdirs + " < " + baseDirCounts.subdirs );
+          }
+
           if (allowedCacheSize < baseDirCounts.size ||
               allowedCacheSubdirs < baseDirCounts.subdirs) {
             CacheDir tcc = new CacheDir();
