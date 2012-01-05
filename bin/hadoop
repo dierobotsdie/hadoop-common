@@ -152,7 +152,7 @@ if [ -e $HADOOP_PREFIX/share/hadoop/hadoop-core-* ]; then
   if [ -d "$HADOOP_PREFIX/share/hadoop/webapps" ]; then
     CLASSPATH=${CLASSPATH}:$HADOOP_PREFIX/share/hadoop
   fi
-  for f in "$HADOOP_PREFIX/share/hadoop/hadoop-core-*.jar; do
+  for f in $HADOOP_PREFIX/share/hadoop/hadoop-core-*.jar; do
     CLASSPATH=${CLASSPATH}:$f;
   done
 
