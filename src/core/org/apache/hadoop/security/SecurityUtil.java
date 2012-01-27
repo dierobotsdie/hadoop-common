@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.util.Set;
@@ -34,6 +35,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.net.NetUtils;
+import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
+import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authorize.AccessControlList;
 import org.apache.hadoop.security.token.Token;
 
@@ -106,44 +109,6 @@ public class SecurityUtil {
            components[1].equals(components[2]);
   }
 
-  /**
-   * Explicitly pull the service ticket for the specified host.  This solves a
-   * problem with Java's Kerberos SSL problem where the client cannot 
-   * authenticate against a cross-realm service.  It is necessary for clients
-   * making kerberized https requests to call this method on the target URL
-   * to ensure that in a cross-realm environment the remote host will be 
-   * successfully authenticated.  
-   * 
-   * This method is internal to Hadoop and should not be used by other 
-   * applications.  This method should not be considered stable or open: 
-   * it will be removed when the Java behavior is changed.
-   * 
-   * @param remoteHost Target URL the krb-https client will access
-   */
-  public static void fetchServiceTicket(URL remoteHost) throws IOException {
-    if(!UserGroupInformation.isSecurityEnabled())
-      return;
-    
-    String serviceName = "host/" + remoteHost.getHost();
-    if (LOG.isDebugEnabled())
-      LOG.debug("Fetching service ticket for host at: " + serviceName);
-    Credentials serviceCred = null;
-    try {
-      PrincipalName principal = new PrincipalName(serviceName,
-          PrincipalName.KRB_NT_SRV_HST);
-      serviceCred = Credentials.acquireServiceCreds(principal
-          .toString(), Krb5Util.ticketToCreds(getTgtFromSubject()));
-    } catch (Exception e) {
-      throw new IOException("Can't get service ticket for: "
-          + serviceName, e);
-    }
-    if (serviceCred == null) {
-      throw new IOException("Can't get service ticket for " + serviceName);
-    }
-    Subject.getSubject(AccessController.getContext()).getPrivateCredentials()
-        .add(Krb5Util.credsToTicket(serviceCred));
-  }
-  
   /**
    * Convert Kerberos principal name pattern to valid Kerberos principal
    * names. It replaces hostname pattern with hostname, which should be
@@ -344,5 +309,29 @@ public class SecurityUtil {
    */
   public static String getHostFromPrincipal(String principalName) {
     return new KerberosName(principalName).getHostName();
+  }
+
+  /**
+   * Open a (if need be) secure connection to a URL in a secure environment
+   * that is using SPNEGO to authenticate its URLs. All Namenode and Secondary
+   * Namenode URLs that are protected via SPNEGO should be accessed via this
+   * method.
+   *
+   * @param url to authenticate via SPNEGO.
+   * @return A connection that has been authenticated via SPNEGO
+   * @throws IOException If unable to authenticate via SPNEGO
+   */
+  public static URLConnection openSecureHttpConnection(URL url) throws IOException {
+    if(!UserGroupInformation.isSecurityEnabled()) {
+      return url.openConnection();
+    }
+
+    AuthenticatedURL.Token token = new AuthenticatedURL.Token();
+    try {
+      return new AuthenticatedURL().openConnection(url, token);
+    } catch (AuthenticationException e) {
+      throw new IOException("Exception trying to open authenticated connection to "
+              + url, e);
+    }
   }
 }
