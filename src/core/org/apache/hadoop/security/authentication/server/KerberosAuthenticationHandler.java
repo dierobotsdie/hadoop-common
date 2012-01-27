@@ -15,8 +15,6 @@ package org.apache.hadoop.security.authentication.server;
 
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
-import org.apache.hadoop.security.SecurityUtil;
-import org.apache.hadoop.net.NetUtils;
 import com.sun.security.auth.module.Krb5LoginModule;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.security.KerberosName;
@@ -37,7 +35,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -124,7 +121,6 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
   public static final String NAME_RULES = TYPE + ".name.rules";
 
   private String principal;
-  private String initialPrincipal;
   private String keytab;
   private GSSManager gssManager;
   private LoginContext loginContext;
@@ -142,16 +138,44 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
    */
   @Override
   public void init(Properties config) throws ServletException {
-    initialPrincipal = config.getProperty(PRINCIPAL, principal);
-    if (initialPrincipal == null || initialPrincipal.trim().length() == 0) {
-      throw new ServletException("Principal not defined in configuration");
-    }
-    keytab = config.getProperty(KEYTAB, keytab);
-    if (keytab == null || keytab.trim().length() == 0) {
-      throw new ServletException("Keytab not defined in configuration");
-    }
-    if (!new File(keytab).exists()) {
-      throw new ServletException("Keytab does not exist: " + keytab);
+    try {
+      principal = config.getProperty(PRINCIPAL, principal);
+      if (principal == null || principal.trim().length() == 0) {
+        throw new ServletException("Principal not defined in configuration");
+      }
+      keytab = config.getProperty(KEYTAB, keytab);
+      if (keytab == null || keytab.trim().length() == 0) {
+        throw new ServletException("Keytab not defined in configuration");
+      }
+      if (!new File(keytab).exists()) {
+        throw new ServletException("Keytab does not exist: " + keytab);
+      }
+
+      Set<Principal> principals = new HashSet<Principal>();
+      principals.add(new KerberosPrincipal(principal));
+      Subject subject = new Subject(false, principals, new HashSet<Object>(), new HashSet<Object>());
+
+      KerberosConfiguration kerberosConfiguration = new KerberosConfiguration(keytab, principal);
+
+      LOG.info("Login using keytab "+keytab+", for principal "+principal);
+      loginContext = new LoginContext("", subject, null, kerberosConfiguration);
+      loginContext.login();
+
+      Subject serverSubject = loginContext.getSubject();
+      try {
+        gssManager = Subject.doAs(serverSubject, new PrivilegedExceptionAction<GSSManager>() {
+
+          @Override
+          public GSSManager run() throws Exception {
+            return GSSManager.getInstance();
+          }
+        });
+      } catch (PrivilegedActionException ex) {
+        throw ex.getException();
+      }
+      LOG.info("Initialized, principal [{}] from keytab [{}]", principal, keytab);
+    } catch (Exception ex) {
+      throw new ServletException(ex);
     }
   }
 
@@ -218,47 +242,6 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
   @Override
   public AuthenticationToken authenticate(HttpServletRequest request, final HttpServletResponse response)
     throws IOException, AuthenticationException {
-
-    /* figure out which host was actually asked for
-     * then convert it to an ip addr.
-     * this prevents short names from blowing up
-     */
-    String hostName=request.getServerName();
-    InetAddress localAddr = NetUtils.getLocalInetAddress(hostName);
-    if (localAddr == null ) {
-       principal = SecurityUtil.getServerPrincipal(initialPrincipal, hostName);
-    } else {
-       principal = SecurityUtil.getServerPrincipal(initialPrincipal, localAddr);
-    }
-	
-    try {
-      Set<Principal> principals = new HashSet<Principal>();
-      principals.add(new KerberosPrincipal(principal));
-      Subject subject = new Subject(false, principals, new HashSet<Object>(), new HashSet<Object>());
-
-      KerberosConfiguration kerberosConfiguration = new KerberosConfiguration(keytab, principal);
-
-      LOG.info("Login using keytab "+keytab+", for principal "+principal);
-      loginContext = new LoginContext("", subject, null, kerberosConfiguration);
-      loginContext.login();
-
-      Subject serverSubject = loginContext.getSubject();
-      try {
-        gssManager = Subject.doAs(serverSubject, new PrivilegedExceptionAction<GSSManager>() {
-
-          @Override
-          public GSSManager run() throws Exception {
-            return GSSManager.getInstance();
-          }
-        });
-      } catch (PrivilegedActionException ex) {
-        throw ex.getException();
-      }
-      LOG.info("Initialized, principal [{}] from keytab [{}]", principal, keytab);
-    } catch (Exception ex) {
-      throw new AuthenticationException(ex);
-    }
- 
     AuthenticationToken token = null;
     String authorization = request.getHeader(KerberosAuthenticator.AUTHORIZATION);
 
