@@ -1042,16 +1042,7 @@ public class DistCp implements Tool {
     // default logPath
     Path logPath = args.log; 
     if (logPath == null) {
-      String filename = "_distcp_logs_" + randomId;
-      if (!dstExists || !dstIsDir) {
-        Path parent = args.dst.getParent();
-        if (!dstfs.exists(parent)) {
-          dstfs.mkdirs(parent);
-        }
-        logPath = new Path(parent, filename);
-      } else {
-        logPath = new Path(args.dst, filename);
-      }
+      logPath = new Path("/tmp/"+"_distcp_logs_" + randomId);
     }
     FileOutputFormat.setOutputPath(jobConf, logPath);
 
