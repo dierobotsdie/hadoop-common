@@ -969,6 +969,7 @@ public class TrackerDistributedCacheManager {
       HashMap<Path, CacheDir> toBeCleanedBaseDir = 
         new HashMap<Path, CacheDir>();
       synchronized (properties) {
+        LOG.debug("checkAndCleanup: Allowed Cache Size test");
         for (Map.Entry<Path, CacheDir> baseDir : properties.entrySet()) {
           CacheDir baseDirCounts = baseDir.getValue();
           CacheStatus cacheStat=cachedArchives.get(baseDir.getKey());
@@ -976,7 +977,10 @@ public class TrackerDistributedCacheManager {
              Path localizedDir = cacheStat.getLocalizedUniqueDir();
              LOG.debug(localizedDir+": allowedCacheSize < baseDirCounts.size = " + allowedCacheSize + " < " + baseDirCounts.size);
              LOG.debug(localizedDir+": allowedCacheSubdirs < baseDirCounts.subdirs = " + allowedCacheSubdirs + " < " + baseDirCounts.subdirs );
-          }
+          } else {
+	     LOG.debug(baseDir.getKey()+": allowedCacheSize < baseDirCounts.size = " + allowedCacheSize + " < " + baseDirCounts.size);
+             LOG.debug(baseDir.getKey()+": allowedCacheSubdirs < baseDirCounts.subdirs = " + allowedCacheSubdirs + " < " + baseDirCounts.subdirs );
+	  }
 
           if (allowedCacheSize < baseDirCounts.size ||
               allowedCacheSubdirs < baseDirCounts.subdirs) {
@@ -989,6 +993,7 @@ public class TrackerDistributedCacheManager {
       }
       // try deleting cache Status with refcount of zero
       synchronized (cachedArchives) {
+        LOG.debug("checkAndCleanup: Global Cache Size Check");
         for(
             Iterator<Map.Entry<String, CacheStatus>> it 
             = cachedArchives.entrySet().iterator();
@@ -997,9 +1002,14 @@ public class TrackerDistributedCacheManager {
           String cacheId = entry.getKey();
           CacheStatus cacheStatus = cachedArchives.get(cacheId);
           CacheDir leftToClean = toBeCleanedBaseDir.get(cacheStatus.getBaseDir());
+          Path localizedDir = cacheStatus.getLocalizedUniqueDir();
+          LOG.debug(localizedDir+": testing for clean status");
+          LOG.debug(localizedDir+": isUsed="+cacheStatus.isUsed()+" size="+cacheStatus.size+" basedir="+cacheStatus.getBaseDir());
+
           if (leftToClean != null && (leftToClean.size > 0 || leftToClean.subdirs > 0)) {
             synchronized (cacheStatus) {
               // if reference count is zero mark the cache for deletion
+              LOG.debug(localizedDir+": isUsed="+cacheStatus.isUsed()+" size="+cacheStatus.size+" leftToClean.size="+leftToClean.size);
               if (!cacheStatus.isUsed()) {
                 leftToClean.size -= cacheStatus.size;
                 leftToClean.subdirs--;
