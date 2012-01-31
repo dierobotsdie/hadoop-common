@@ -972,15 +972,9 @@ public class TrackerDistributedCacheManager {
         LOG.debug("checkAndCleanup: Allowed Cache Size test");
         for (Map.Entry<Path, CacheDir> baseDir : properties.entrySet()) {
           CacheDir baseDirCounts = baseDir.getValue();
-          CacheStatus cacheStat=cachedArchives.get(baseDir.getKey());
-          if (cacheStat != null) {
-             Path localizedDir = cacheStat.getLocalizedUniqueDir();
-             LOG.debug(localizedDir+": allowedCacheSize < baseDirCounts.size = " + allowedCacheSize + " < " + baseDirCounts.size);
-             LOG.debug(localizedDir+": allowedCacheSubdirs < baseDirCounts.subdirs = " + allowedCacheSubdirs + " < " + baseDirCounts.subdirs );
-          } else {
-	     LOG.debug(baseDir.getKey()+": allowedCacheSize < baseDirCounts.size = " + allowedCacheSize + " < " + baseDirCounts.size);
-             LOG.debug(baseDir.getKey()+": allowedCacheSubdirs < baseDirCounts.subdirs = " + allowedCacheSubdirs + " < " + baseDirCounts.subdirs );
-	  }
+
+	  LOG.debug(baseDir.getKey()+": allowedCacheSize < baseDirCounts.size = " + allowedCacheSize + " < " + baseDirCounts.size);
+          LOG.debug(baseDir.getKey()+": allowedCacheSubdirs < baseDirCounts.subdirs = " + allowedCacheSubdirs + " < " + baseDirCounts.subdirs );
 
           if (allowedCacheSize < baseDirCounts.size ||
               allowedCacheSubdirs < baseDirCounts.subdirs) {
@@ -1005,6 +999,13 @@ public class TrackerDistributedCacheManager {
           Path localizedDir = cacheStatus.getLocalizedUniqueDir();
           LOG.debug(localizedDir+": testing for clean status");
           LOG.debug(localizedDir+": isUsed="+cacheStatus.isUsed()+" size="+cacheStatus.size+" basedir="+cacheStatus.getBaseDir());
+          if (!cacheStatus.isUsed() && cacheStatus.size==0) {
+                LOG.debug("attempting to repair size of "+localizedDir);
+                setSize(cacheStatus,FileUtil.getDU(new File(localizedDir.toString())));
+                LOG.debug(localizedDir+" set to "+cacheStatus.size);
+          }
+
+
 
           if (leftToClean != null && (leftToClean.size > 0 || leftToClean.subdirs > 0)) {
             synchronized (cacheStatus) {
