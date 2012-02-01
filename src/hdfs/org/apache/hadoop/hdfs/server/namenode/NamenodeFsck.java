@@ -153,6 +153,7 @@ public class NamenodeFsck {
           + " from " + remoteAddress + " for path " + path + " at " + new Date();
       LOG.info(msg);
       out.println(msg);
+      out.flush();
       namenode.getNamesystem().logFsckEvent(path, remoteAddress);
       Result res = new Result(conf);
       final HdfsFileStatus file = namenode.getFileInfo(path);
