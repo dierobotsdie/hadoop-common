@@ -30,12 +30,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.Principal;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -94,11 +89,6 @@ public class AuthenticationFilter implements Filter {
   public static final String SIGNATURE_SECRET = "signature.secret";
 
   /**
-   * File that specifies the secret to use for signing the HTTP Cookies.
-   */
-  public static final String SIGNATURE_SECRET_FILE = "signature.secret.file";
-
-  /**
    * Constant for the configuration property that indicates the validity of the generated token.
    */
   public static final String AUTH_TOKEN_VALIDITY = "token.validity";
@@ -121,35 +111,6 @@ public class AuthenticationFilter implements Filter {
   private long validity;
   private String cookieDomain;
   private String cookiePath;
-  private volatile String signatureSecret=null;
-  private volatile boolean secretSet=false;
-
-  private String readSignatureSecret(String filename) throws IOException {
-    File file = new File(filename);
-    String line;
-    if (!file.exists()) {
-      throw new FileNotFoundException(filename);
-    }
-    FileInputStream fis = new FileInputStream(file);
-    BufferedReader reader = null;
-    try {
-      reader = new BufferedReader(new InputStreamReader(fis));
-      while ((line = reader.readLine()) != null) {
-        // ignore comments
-        if (line.startsWith("#")) {
-		continue;
-	} else {
-		break;
-	}
-      }
-    } finally {
-      if (reader != null) {
-        reader.close();
-      }
-      fis.close();
-    }
-    return(line);
-  }
 
   /**
    * Initializes the authentication filter.
@@ -190,26 +151,12 @@ public class AuthenticationFilter implements Filter {
     } catch (IllegalAccessException ex) {
       throw new ServletException(ex);
     }
-
-    String signatureSecret=null;
-    try {
-     	String filename=config.getProperty(configPrefix + SIGNATURE_SECRET_FILE);
-     	if (filename != null) {
-               	signatureSecret=readSignatureSecret(config.getProperty(configPrefix + SIGNATURE_SECRET_FILE));
-       	}
-    } catch (IOException ex) {
-      	LOG.warn(configPrefix + SIGNATURE_SECRET_FILE + " exception: " + ex.getMessage(), ex);
-       	signatureSecret=null;
-    }
+    String signatureSecret = config.getProperty(configPrefix + SIGNATURE_SECRET);
     if (signatureSecret == null) {
-       	signatureSecret = config.getProperty(configPrefix + SIGNATURE_SECRET);
-       	if (signatureSecret == null) {
-               	signatureSecret = Long.toString(RAN.nextLong());
-               	randomSecret = true;
-               	LOG.warn(configPrefix + SIGNATURE_SECRET+" configuration not set, using a random value as secret");
-	}
+      signatureSecret = Long.toString(RAN.nextLong());
+      randomSecret = true;
+      LOG.warn("'signature.secret' configuration not set, using a random value as secret");
     }
-
     signer = new Signer(signatureSecret.getBytes());
     validity = Long.parseLong(config.getProperty(AUTH_TOKEN_VALIDITY, "36000")) * 1000; //10 hours
 
