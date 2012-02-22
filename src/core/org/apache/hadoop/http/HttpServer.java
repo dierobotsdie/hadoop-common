@@ -152,7 +152,9 @@ public class HttpServer implements FilterContainer {
       listenerStartedExternally = true;
       listener = connector;
     }
-    
+
+    conf.set("hadoop.http.authentication.webserver.address",bindAddress);
+    conf.set("hadoop.http.authentication.webserver.port",String.valueOf(port));
     webServer.addConnector(listener);
 
     webServer.setThreadPool(new QueuedThreadPool());
