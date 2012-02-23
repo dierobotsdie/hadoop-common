@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN"
+          "http://forrest.apache.org/dtd/document-v20.dtd">
+
+
+<document>
+
+  <header>
+    <title> 
+      Smarter Authentication for Hadoop HTTP web-consoles
+    </title>
+  </header>
+
+  <body>
+    <section>
+      <title> Introduction </title>
+      <p>
+        By default Hadoop HTTP web-consoles (JobTracker, NameNode, TaskTrackers and DataNodes) allow 
+        access without any form of authentication.  However, in a secure grid, this is less than ideal.
+        As an alternative, Hadoop HTTP web-consoles can be configured to require Kerberos 
+        authentication using HTTP SPNEGO protocol.  Most major browsers (including Chrome, Firefox, 
+        and Internet Explorer) support this by changing some client configuration information.
+        After it is configured, the user gets the same SSO experience over the web.
+      </p>
+      <p>
+        If a custom authentication mechanism is required for the HTTP web-consoles, it is possible 
+        to implement a plugin to support the alternate authentication mechanism (refer to 
+        Hadoop Alfredo for details on writing an <code>AuthenticatorHandler</code>).
+      </p>
+      <p>
+        IMPORTANT: The Smarter Authentication Filter requires HADOOP-8100 to be applied to your code base.
+      </p>
+      <p>       
+        The next section describes how to configure Hadoop HTTP web-consoles to require user 
+        authentication using the Smarter Authentication Filter system.
+      </p>
+    </section>
+
+    <section> 
+      <title> Configuration </title>
+
+      <p>
+        The following properties should be in the <code>core-site.xml</code> of all the nodes
+        in the cluster.
+      </p>
+
+      <p><code>hadoop.http.filter.initializers</code>: add to this property the 
+      <code>org.apache.hadoop.security.SmarterAuthenticationFilterInitializer</code> initializer class.
+      </p>
+      
+      <p><code>hadoop.http.authentication.type</code>: Defines authentication used for the HTTP 
+      web-consoles. The supported values are: <code>simple | kerberos | 
+      #AUTHENTICATION_HANDLER_CLASSNAME#</code>. The default value is <code>simple</code>.
+      </p>
+
+      <p><code>hadoop.http.authentication.token.validity</code>: Indicates how long (in seconds) 
+      an authentication token is valid before it has to be renewed. The default value is 
+      <code>36000</code>.
+      </p>
+
+      <p><code>hadoop.http.authentication.signature.secret.file</code>: A file that contains 
+      the signature secret for signing the authentication tokens.  The same secret should be used for all 
+      nodes in the cluster. The default value is a <code>${user.home}/${user.name}.http-auth-signature-secret</code> value.
+      </p>
+        
+      <p><code>hadoop.http.authentication.cookie.domain</code>: The domain to use for the HTTP 
+      cookie that stores the authentication token. In order to authentiation to work 
+      correctly across all nodes in the cluster the domain must be correctly set.
+      The default will set the HTTP cookie to the hostname.
+      </p>
+
+      <p>
+      IMPORTANT: when using IP addresses, browsers ignore cookies with domain settings.
+      For this setting to work properly all nodes in the cluster must be configured
+      to generate URLs with hostname.domain names on it.
+      </p>
+
+      <p><code>hadoop.http.authentication.simple.anonymous.allowed</code>: Indicates if anonymous 
+      requests are allowed when using 'simple' authentication. The default value is 
+      <code>true</code>
+      </p>
+
+      <p><code>hadoop.http.authentication.kerberos.principal</code>: Indicates the Kerberos 
+      principal to be used for HTTP endpoint when using 'kerberos' authentication.
+      The principal short name must be <code>HTTP</code> per Kerberos HTTP SPENGO specification.
+      The default value is <code>HTTP/_HOST@REALM</code>, where the realm is determined by the
+      default realm in the Kerberos configuration file.
+      </p>
+
+      <p><code>hadoop.http.authentication.kerberos.keytab</code>: Location of the keytab file 
+      with the credentials for the Kerberos principal used for the HTTP endpoint. 
+      The default value is <code>${user.home}/${user.name}.keytab</code>.
+      </p>
+
+    </section>
+
+  </body>
+</document>
+
