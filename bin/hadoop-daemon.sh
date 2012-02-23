@@ -51,6 +51,16 @@ shift
 command=$1
 shift
 
+#
+# this lets start-dfs/stop-dfs run as hdfs and still run datanode as root
+# needs hdfs nopasswd for /etc/hadoop/datanode-helper in sudoers (or ldap's 
+# version of sudoers...)
+#
+if [ "$command" == "datanode" ] && [ "$EUID" -ne 0 ] && [ -n "$HADOOP_SECURE_DN_USER" ]; then
+  sudo /etc/hadoop/datanode-helper $bin/hadoop-daemon.sh ${startStop} "$@"
+  exit $?
+fi
+
 hadoop_rotate_log ()
 {
     log=$1;

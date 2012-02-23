@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#
+# this should be copied to /etc/hadoop
+#
+
+
+daemoncmd=$1
+shift
+command=$1
+shift
+
+${daemoncmd} ${command} datanode $@
