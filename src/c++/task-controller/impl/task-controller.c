@@ -33,6 +33,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 
 #define USER_DIR_PATTERN "%s/taskTracker/%s"
 
@@ -55,6 +56,8 @@
 static const int DEFAULT_MIN_USERID = 1000;
 
 #define BANNED_USERS_KEY "banned.users"
+
+#define PRIO_ADJ_KEY "task.niceness.adjustment"
 
 #define USERLOGS "userlogs"
 
@@ -860,6 +863,7 @@ int run_task_as_user(const char *user, const char * good_local_dirs,
                      const char *job_id, const char *task_id,
                      const char *work_dir, const char *script_name) {
   int exit_code = -1;
+  int priority;
   char *task_script_path = NULL;
   if (create_attempt_directories(user, good_local_dirs, job_id, task_id) != 0) {
     goto cleanup;
@@ -876,6 +880,28 @@ int run_task_as_user(const char *user, const char * good_local_dirs,
   if (copy_file(task_file_source, script_name,task_script_path,S_IRWXU) != 0) {
     goto cleanup;
   }
+
+  // raise or lower priority for tasks
+  // root is required to raise
+  char *prio_adj_str = get_value(PRIO_ADJ_KEY);
+  if (prio_adj_str != NULL) {
+     errno=0;
+     adj_prio=atoi(prio_adj_str);
+     priority=getpriority(PRIO_PROCESS,0);
+     if (priority == -1 && errno > 0) {
+       fprintf(LOGFILE,"Warning: Can't get priority for current process\n",strerror(errno));
+     } else {
+      priority=priority+adj_prio;
+      if (priority < 20 && priority > -21) {
+        if (setpriority(PRIO_PROCESS,0,priority) != 0 ) {
+          fprintf(LOGFILE,"Warning: Can't setpriority to %i -%s\n",priority,strerror(errno));
+        }
+      } else {
+        fprintf(LOGFILE,"Warning: resulting priority (%i) after %i adjustment is not valid (-20 through 19)\n",priority,adj_prio);
+      }
+    }
+  }
+
 
   //change the user
   fcloseall();
