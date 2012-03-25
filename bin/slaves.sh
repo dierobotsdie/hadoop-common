@@ -63,7 +63,7 @@ fi
 
 if [ -e '/usr/bin/pdsh' ]; then
 
-  pdsh -w ^${HOSTLIST} -x^${HADOOP_CONF_DIR}/dfs.exclude,^${HADOOP_CONF_DIR}/mapred.exclude $"${@// /\\ }" 2>&1
+  PDSH_SSH_ARGS_APPEND=${HADOOP_SSH_OPTS} pdsh -w ^${HOSTLIST} -x^${HADOOP_CONF_DIR}/dfs.exclude,^${HADOOP_CONF_DIR}/mapred.exclude $"${@// /\\ }" 2>&1
 
 else
 
