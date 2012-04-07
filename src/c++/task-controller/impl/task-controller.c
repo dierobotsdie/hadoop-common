@@ -875,6 +875,7 @@ int run_task_as_user(const char *user, const char * good_local_dirs,
                      const char *work_dir, const char *script_name) {
   int exit_code = -1;
   int priority;
+  int adj_prio=0;
   char *task_script_path = NULL;
   if (create_attempt_directories(user, good_local_dirs, job_id, task_id) != 0) {
     goto cleanup;
@@ -900,7 +901,7 @@ int run_task_as_user(const char *user, const char * good_local_dirs,
      adj_prio=atoi(prio_adj_str);
      priority=getpriority(PRIO_PROCESS,0);
      if (priority == -1 && errno > 0) {
-       fprintf(LOGFILE,"Warning: Can't get priority for current process\n",strerror(errno));
+       fprintf(LOGFILE,"Warning: Can't get priority for current process: %s\n",strerror(errno));
      } else {
       priority=priority+adj_prio;
       if (priority < 20 && priority > -21) {
