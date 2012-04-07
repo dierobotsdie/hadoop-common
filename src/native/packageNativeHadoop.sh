@@ -46,7 +46,7 @@ then
   done
 fi
 
-# Copy the custom-built libraries in $BUILD_DIR
+# Copy the custom-built libraries in $BUILD_NATIVE_DIR
 if [ -d $BUILD_NATIVE_DIR ]
 then 
   for platform in `ls $BUILD_NATIVE_DIR`

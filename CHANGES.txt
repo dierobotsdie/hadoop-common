@@ -1,6 +1,74 @@
 Hadoop Change Log
 
-Release 1.0.0 - 2011.11.27
+Release 1.0.2 - unreleased
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+  BUG FIXES
+
+    HADOOP-8050. Deadlock in metrics. (Kihwal Lee via mattf)
+
+    MAPREDUCE-3824. Distributed caches are not removed properly. (Thomas Graves
+    via mattf)
+
+    MAPREDUCE-3583. Change pid to String and stime to BigInteger in order to
+    avoid NumberFormatException caused by overflow.  (Zhihong Yu via szetszwo)
+
+    HDFS-3006. In WebHDFS, when the return body is empty, set the Content-Type
+    to application/octet-stream instead of application/json.  (szetszwo)
+
+Release 1.0.1 - 2012.02.14
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+    MAPREDUCE-3607. Port missing new API mapreduce lib classes to 1.x. (tomwhite)
+
+    HADOOP-7987. Support setting the run-as user in unsecure mode. (jitendra)
+
+    HADOOP-7988. Upper case in hostname part of the principals doesn't work with 
+    kerberos. (jitendra)
+
+    HDFS-2814. NamenodeMXBean does not account for svn revision in the version 
+    information. (Hitesh Shah via jitendra)
+
+    HADOOP-7470. Move up to Jackson 1.8.8.  (Enis Soztutar via szetszwo)
+
+    HDFS-2379. Allow block reports to proceed without holding FSDataset lock.
+    (todd via suresh)
+
+    HADOOP-8009. Create hadoop-client and hadoop-minicluster artifacts for
+    downstream projects. (Alejandro Abdelnur via mattf)
+
+    MAPREDUCE-3184. Add a thread to the TaskTracker which monitors for
+    spinning Jetty selector threads, and shuts down the daemon when one is
+    detected. (todd)
+
+  BUG FIXES
+
+    HADOOP-7960. Port HADOOP-5203 to branch-1, build version comparison is too 
+    restrictive. (mattf)
+
+    HADOOP-7964. Deadlock in NetUtils and SecurityUtil class initialization.
+    (Daryn Sharp via suresh)
+
+    HADOOP-8010. hadoop-config.sh errors when HADOOP_HOME_WARN_SUPPRESS is set 
+    to true and HADOOP_HOME is present. (Roman Shaposhnik via mattf)
+
+    HADOOP-8052. Hadoop Metrics2 should emit Float.MAX_VALUE (instead of 
+    Double.MAX_VALUE) to avoid making Ganglia's gmetad core. (Varun Kapoor
+    via mattf)
+
+    MAPREDUCE-3343. TaskTracker Out of Memory because of distributed cache.
+    (Zhao Yunjiong).
+
+    HADOOP-8037. Binary tarball does not preserve platform info for native builds,
+    and RPMs fail to provide needed symlinks for libhadoop.so.  (Matt Foley)
+
+Release 1.0.0 - 2011.12.15
 
   NEW FEATURES
 
