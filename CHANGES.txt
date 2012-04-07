@@ -1,10 +1,29 @@
 Hadoop Change Log
 
-Release 1.0.2 - unreleased
+Release 1.0.2 - 2012.03.24
 
   NEW FEATURES
 
+    HADOOP-7206. Support Snappy compression. (Issei Yoshida and
+    Alejandro Abdelnur via vinodkv).
+
+    HDFS-2701. Cleanup FS* processIOError methods. (eli)
+
+    HDFS-2978. The NameNode should expose name dir statuses via JMX. (atm)
+
   IMPROVEMENTS
+
+    MAPREDUCE-3773. Add queue metrics with buckets for job run times. (omalley
+    via acmurthy)
+
+    HADOOP-1722. Allow hadoop streaming to handle non-utf8 byte array. (Klaas
+    Bosteels and Matthias Lehmann via acmurthy)
+
+    HADOOP-5450. Add support for application-specific typecodes to typed
+    bytes. (Klaas Bosteels via acmurthy) 
+
+    HADOOP-8090. rename hadoop 64 bit rpm/deb package name. (Giridharan Kesavan
+    via mattf)
 
   BUG FIXES
 
@@ -18,6 +37,31 @@ Release 1.0.2 - unreleased
 
     HDFS-3006. In WebHDFS, when the return body is empty, set the Content-Type
     to application/octet-stream instead of application/json.  (szetszwo)
+
+    MAPREDUCE-764. Fix TypedBytesInput.readRaw to preserve custom type codes.  
+    (Klaas Bosteels via acmurthy) 
+
+    HDFS-2703. removedStorageDirs is not updated everywhere we remove
+    a storage dir. (eli)
+
+    HDFS-2702. A single failed name dir can cause the NN to exit. (eli)
+
+    HDFS-3075. Backport HADOOP-4885: Try to restore failed name-node storage
+    directories at checkpoint time.  (Brandon Li via szetszwo)
+
+    HDFS-3101. Cannot read empty file using WebHDFS.  (szetszwo)
+
+    MAPREDUCE-3851.  Allow more aggressive action on detection of the jetty
+    issue (tgraves via bobby)
+
+    HADOOP-8088. User-group mapping cache incorrectly does negative caching on
+    transient failures (Kihwal Lee via bobby)
+
+    HADOOP-8132. 64bit secure datanodes do not start as the jsvc path is wrong
+    (Arpit Gupta via mattf)
+
+    HADOOP-8201. create the configure script for native compilation as part of
+    the build (Giri Kesavan via mattf)
 
 Release 1.0.1 - 2012.02.14
 
