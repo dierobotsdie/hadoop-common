@@ -2030,10 +2030,11 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
         }
         // Check if the task is over the time limit
         long execTime = now - tip.getStatus().getStartTime();
+        execTime=execTime/1000;
         if (execTime > queueTaskTimeout && !tip.wasKilled) {
           String msg =
             "Task " + tip.getTask().getTaskID() + " is over the queue time limit of "
-            + (queueTaskTimeout / 1000) + " seconds. Killing!";
+            + queueTaskTimeout + " seconds. Killing!";
           LOG.info(tip.getTask().getTaskID() + ": " + msg);
           ReflectionUtils.logThreadInfo(LOG, "task running too long", 30);
           tip.reportDiagnosticInfo(msg);
