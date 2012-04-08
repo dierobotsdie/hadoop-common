@@ -1718,6 +1718,7 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
             }
           }
         }
+        markQueueTimeLimitTasks();
         markUnresponsiveTasks();
         killOverflowingTasks();
             
@@ -2011,6 +2012,38 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
     }
     return false;
   }
+
+  /**
+   * Kill any tasks that violate any queue timeout limits.
+   */
+  private synchronized void markQueueTimeLimitTasks() throws IOException {
+    long now = System.currentTimeMillis();
+    for (TaskInProgress tip: runningTasks.values()) {
+      if (tip.getRunState() == TaskStatus.State.RUNNING ||
+          tip.getRunState() == TaskStatus.State.COMMIT_PENDING ||
+          tip.isCleaningup()) {
+        // Check the per-job timeout interval for tasks;
+        // an interval of '0' implies it is never timed-out
+        long queueTaskTimeout = tip.getQueueTimeLimit();
+        if (queueTaskTimeout == 0) {
+          continue;
+        }
+        // Check if the task is over the time limit
+        long execTime = now - tip.getStatus().getStartTime();
+        if (execTime > queueTaskTimeout && !tip.wasKilled) {
+          String msg =
+            "Task " + tip.getTask().getTaskID() + " is over the queue time limit of "
+            + (queueTaskTimeout / 1000) + " seconds. Killing!";
+          LOG.info(tip.getTask().getTaskID() + ": " + msg);
+          ReflectionUtils.logThreadInfo(LOG, "task running too long", 30);
+          tip.reportDiagnosticInfo(msg);
+          myInstrumentation.timedoutTask(tip.getTask().getTaskID());
+          purgeTask(tip, true);
+        }
+      }
+    }
+  }
+
     
   /**
    * Kill any tasks that have not reported progress in the last X seconds.
@@ -2656,6 +2689,13 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
       
       return taskStatus;
     }
+
+
+    public synchronized long getQueueTimeLimit() {
+    	String queueName=localJobConf.getQueueName();
+        return localJobConf.getLong("mapred.queue."+queueName+".task-time-limit",0);
+    }
+
 
     /**
      * Kick off the task execution
