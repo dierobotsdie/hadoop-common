@@ -1040,6 +1040,14 @@
 </property>
 
 <property>
+  <name>mapred.queue.default.task-time-limit</name>
+  <value>0</value>
+  <description>The time in seconds that a task is allowed to run in the
+    named queue.  Default is 0, which is an unlimited amount of time.
+  </description>
+</property>
+
+<property>
   <name>mapred.acls.enabled</name>
   <value>false</value>
   <description> Specifies whether ACLs should be checked
