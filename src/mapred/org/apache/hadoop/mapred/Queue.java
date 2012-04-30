@@ -38,6 +38,8 @@ class Queue {
   private Map<String,AccessControlList> acls;
   private QueueState state = QueueState.RUNNING;
   private QueueMetrics queueMetrics;
+  private long taskWallClockLimit;
+  private long jobWallClockLimit;
 
   /**
    * An Object that can be used by schedulers to fill in
@@ -71,11 +73,13 @@ class Queue {
    * @param state state of the queue
    */
   Queue(String name, Map<String, AccessControlList> acls, QueueState state,
-        QueueMetrics metrics) {
+        QueueMetrics metrics,long taskWallClockLimit, long jobWallClockLimit) {
 	  this.name = name;
 	  this.acls = acls;
 	  this.state = state;
 	  this.queueMetrics = metrics;
+          this.taskWallClockLimit = taskWallClockLimit;
+          this.jobWallClockLimit = jobWallClockLimit;
   }
 
   /**
@@ -94,6 +98,22 @@ class Queue {
   void setName(String name) {
     assert name != null;
     this.name = name;
+  }
+
+  /**
+   * Return the length of time that task attempts are allowed to
+   * execute
+   */
+  long getTaskWallClockLimit() {
+    return taskWallClockLimit;
+  }
+
+  /**
+   * Return the length of time that jobs are allowed to
+   * execute
+   */
+  long getJobWallClockLimit() {
+    return jobWallClockLimit;
   }
 
   /**

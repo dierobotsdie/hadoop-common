@@ -435,7 +435,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
       }
     }
   }
-    
+
   ///////////////////////////////////////////////////////
   // Used to expire TaskTrackers that have gone down
   ///////////////////////////////////////////////////////
@@ -2658,6 +2658,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
         ex.printStackTrace();
       }
     }
+
     if (this.completedJobsStoreThread != null &&
         this.completedJobsStoreThread.isAlive()) {
       LOG.info("Stopping completedJobsStore thread");
@@ -3399,6 +3400,9 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
         }
         if (tasks != null) {
           for (Task task : tasks) {
+            QueueManager qm = getQueueManager();
+            String queueName = task.getConf().get("mapred.job.queue.name");
+            task.setQueueTaskWallClockLimit(qm.getTaskWallClockLimit(queueName));
             expireLaunchingTasks.addNewTask(task.getTaskID());
             if(LOG.isDebugEnabled()) {
               LOG.debug(trackerName + " -> LaunchTask: " + task.getTaskID());
