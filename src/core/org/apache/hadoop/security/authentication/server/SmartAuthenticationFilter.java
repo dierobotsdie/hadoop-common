@@ -378,7 +378,7 @@ public class SmartAuthenticationFilter implements Filter {
         }
         filterChain.doFilter(httpRequest, httpResponse);
       } else {
-        throw new AuthenticationException("Missing AuthenticationToken");
+        throw new AuthenticationException("Missing AuthenticationToken or Active Kerberos TGT");
       }
     } catch (AuthenticationException ex) {
       if (!httpResponse.isCommitted()) {

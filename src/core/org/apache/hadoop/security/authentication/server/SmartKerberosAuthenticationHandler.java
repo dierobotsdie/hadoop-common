@@ -91,7 +91,7 @@ public class SmartKerberosAuthenticationHandler implements AuthenticationHandler
       }
 
       return new AppConfigurationEntry[]{
-        new AppConfigurationEntry(Krb5LoginModule.class.getName(),
+        new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
                                   AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
                                   options),};
     }
