@@ -51,5 +51,5 @@ AC_TYPE_SIZE_T
 AC_FUNC_STRERROR_R
 
 # Checks for library functions.
-AC_CHECK_FUNCS([mkdir uname])
+AC_CHECK_FUNCS([mkdir uname getline fgetln openat mkdirat fcloseall closefrom getrlimit])
 AC_OUTPUT

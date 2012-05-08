@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -324,6 +325,7 @@ char *get_user_subdirectory(const char *tt_root,
   return result;
 }
 
+#ifdef HAVE_OPENAT && HAVE_MKDIRAT
 /**
  * Ensure that the given path and all of the parent directories are created
  * with the desired permissions.
@@ -361,6 +363,63 @@ int mkdirs(const char* path, mode_t perm) {
   close(cwd);
   return 0;
 }
+
+#else
+
+/**
+ * Ensure that the given path and all of the parent directories are created
+ * with the desired permissions.
+ *
+ * rework of mkdir.c from OpenBSD
+ * 
+ */
+int mkdirs(const char* path, mode_t perm) {
+  struct stat sb;
+  char *slash;
+  char *buffer=strdup(path);
+  int done, exists;
+
+  slash = buffer;
+
+  for (;;) {
+    slash += strspn(slash, "/");
+    slash += strcspn(slash, "/");
+
+    done = (*slash == '\0');
+    *slash = '\0';
+
+   /* skip existing path components */
+   exists = !stat(buffer, &sb);
+   if (!done && exists && S_ISDIR(sb.st_mode)) {
+     *slash = '/';
+     continue;
+   }
+
+   if (mkdir(buffer, perm) == 0) {
+     if (perm > 0777 && chmod(buffer, perm) < 0)
+       return (-1);
+     } else {
+       if (!exists) {
+	 /* Not there */
+	 return (-1);
+       }
+       if (!S_ISDIR(sb.st_mode)) {
+         /* Is there, but isn't a directory */
+         fprintf(LOGFILE, "Can't open %s in %s - %s\n", buffer, path,
+              strerror(ENOTDIR));
+
+	 return (-1);
+       }
+     }
+
+     if (done)
+	break;
+
+	*slash = '/';
+     }
+     return (0); 
+}
+#endif
 
 static short get_current_local_dir_count(char **local_dir)
 {
@@ -916,7 +975,26 @@ int run_task_as_user(const char *user, const char * good_local_dirs,
 
 
   //change the user
+#ifdef HAVE_FCLOSEALL
   fcloseall();
+#elif HAVE_CLOSEFROM
+  closefrom(3);
+#else
+
+  // if we are here, we must be on OS X.
+  int fd;
+  struct rlimit rl;
+  int fm=1024;
+
+  if ((getrlimit(RLIMIT_NOFILE,&rl) == 0) && (rl.rlim_max != RLIM_INFINITY)) {
+    fm=(int)rl.rlim_max;
+  }
+
+  for (fd = 3; fd<fm; fd++) {
+    close(fd);
+  }
+
+#endif
   umask(0027);
   if (chdir(work_dir) != 0) {
     fprintf(LOGFILE, "Can't change directory to %s -%s\n", work_dir,

@@ -115,9 +115,11 @@ void read_config(const char* file_name) {
   char *line;
   char *equaltok;
   char *temp_equaltok;
-  size_t linesize = 1000;
-  int size_read = 0;
-
+  size_t linesize;
+#ifdef HAVE_GETLINE
+  int size_read=0;
+  linesize=1000;
+#endif
   if (file_name == NULL) {
     fprintf(LOGFILE, "Null configuration filename passed in\n");
     exit(INVALID_CONFIG_FILE);
@@ -142,6 +144,7 @@ void read_config(const char* file_name) {
       fprintf(LOGFILE, "malloc failed while reading configuration file.\n");
       exit(OUT_OF_MEMORY);
     }
+#ifdef HAVE_GETLINE
     size_read = getline(&line,&linesize,conf_file);
     //feof returns true only after we read past EOF.
     //so a file with no new line, at last can reach this place
@@ -155,6 +158,14 @@ void read_config(const char* file_name) {
         break;
       }
     }
+#elif HAVE_FGETLN
+   errno=0;
+   line=fgetln(conf_file,&linesize);
+   if (errno>0) {
+	fprintf(LOGFILE,"fgetln returned an error: %s\n",strerror(errno));
+	exit(INVALID_CONFIG_FILE);
+   }
+#endif
     //trim the ending new line
     line[strlen(line)-1] = '\0';
     //comment line
