@@ -144,7 +144,7 @@ public class TaskTracker {
     }
     
     job.reserveTaskTracker(this, taskType, numSlots);
-    LOG.info(trackerName + ": Reserved " + numSlots + " " + taskType + 
+    LOG.debug(trackerName + ": Reserved " + numSlots + " " + taskType + 
              " slots for " + jobId);
   }
   
