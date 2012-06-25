@@ -32,7 +32,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_SYSLIMITS_H
 #include <sys/syslimits.h>
+#endif
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -325,7 +327,7 @@ char *get_user_subdirectory(const char *tt_root,
   return result;
 }
 
-#ifdef HAVE_OPENAT && HAVE_MKDIRAT
+#if defined(HAVE_OPENAT) && defined(HAVE_MKDIRAT)
 /**
  * Ensure that the given path and all of the parent directories are created
  * with the desired permissions.
