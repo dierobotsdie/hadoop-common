@@ -56,6 +56,9 @@ Java_org_apache_hadoop_security_JniBasedUnixGroupsNetgroupMapping_getUsersForNet
   // if not NULL then THROW exception
   char *errorMessage = NULL;
 
+  // temp var to use for traversing list
+  UserList *current = NULL;
+
   cgroup = (*env)->GetStringUTFChars(env, jgroup, NULL);
   if (cgroup == NULL) {
     goto END;
@@ -69,24 +72,22 @@ Java_org_apache_hadoop_security_JniBasedUnixGroupsNetgroupMapping_getUsersForNet
   int       userListSize = 0;
 
   // set the name of the group for subsequent calls to getnetgrent
-  // note that we want to end group lokup regardless whether setnetgrent
+  // note that we want to end group lookup regardless whether setnetgrent
   // was successfull or not (as long as it was called we need to call
   // endnetgrent)
   setnetgrentCalledFlag = 1;
-  if(setnetgrent(cgroup) == 1) {
-    UserList *current = NULL;
-    // three pointers are for host, user, domain, we only care
-    // about user now
-    char *p[3];
-    while(getnetgrent(p, p + 1, p + 2)) {
-      if(p[1]) {
-        current = (UserList *)malloc(sizeof(UserList));
-        current->string = malloc(strlen(p[1]) + 1);
-        strcpy(current->string, p[1]);
-        current->next = userListHead;
-        userListHead = current;
-        userListSize++;
-      }
+  setnetgrent(cgroup);
+  // three pointers are for host, user, domain, we only care
+  // about user now
+  char *p[3];
+  while(getnetgrent(p, p + 1, p + 2)) {
+    if(p[1]) {
+      current = (UserList *)malloc(sizeof(UserList));
+      current->string = malloc(strlen(p[1]) + 1);
+      strcpy(current->string, p[1]);
+      current->next = userListHead;
+      userListHead = current;
+      userListSize++;
     }
   }
 
@@ -101,8 +102,6 @@ Java_org_apache_hadoop_security_JniBasedUnixGroupsNetgroupMapping_getUsersForNet
     errorMessage = "java/lang/OutOfMemoryError";
     goto END;
   }
-
-  UserList * current = NULL;
 
   // note that the loop iterates over list but also over array (i)
   int i = 0;
