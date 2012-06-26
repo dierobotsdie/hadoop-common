@@ -38,6 +38,11 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#ifdef HAVE_MACH_O_DYLD_H
+#include <mach-o/dyld.h>
+#endif
+
+
 #define USER_DIR_PATTERN "%s/taskTracker/%s"
 
 #define TT_JOB_DIR_PATTERN USER_DIR_PATTERN "/jobcache/%s"
@@ -79,6 +84,7 @@ void set_tasktracker_uid(uid_t user, gid_t group) {
   tt_gid = group;
 }
 
+#ifdef __linux__
 /**
  * get the executable filename.
  */
@@ -99,6 +105,25 @@ char* get_executable() {
   filename[len] = '\0';
   return filename;
 }
+
+#elif defined(__APPLE__) & defined(__MACH__)
+
+char* get_executable() {
+  uint32_t bufsize=FILENAME_MAX;
+  char buffer[bufsize];
+  _NSGetExecutablePath(buffer,&bufsize);
+  char *filename = malloc(bufsize);
+  ssize_t len = readlink(buffer, filename, bufsize);
+  if (len == -1) {
+    fprintf(stderr, "Can't get executable name from %s - %s\n", buffer,
+            strerror(errno));
+    exit(-1);
+  }
+  filename[len] = '\0';
+  return filename;
+}
+
+#endif
 
 /**
  * Check the permissions on taskcontroller to make sure that security is

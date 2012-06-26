@@ -130,6 +130,7 @@ int getGroupIDList(const char *user, int *ngroups, gid_t **groups) {
   return(0);
 }
 
+#endif
 
 /**
  * Gets the group structure for a given group ID. 

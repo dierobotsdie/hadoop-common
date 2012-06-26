@@ -54,15 +54,25 @@ dnl Check for '-ljvm'
 JNI_LDFLAGS=""
 if test $JAVA_HOME != ""
 then
-  JNI_LDFLAGS="-L$JAVA_HOME/jre/lib/$OS_ARCH/server"
-  JVMSOPATH=`find $JAVA_HOME/jre/ -name libjvm.so | head -n 1`
-  JNI_LDFLAGS="$JNI_LDFLAGS -L`dirname $JVMSOPATH`"
+  if test "${host_os}"="*darwin"
+  then
+    JNI_LDFLAGS="-framework JavaVM"
+    JNI_CFLAGS="-I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
+  else 
+    JNI_LDFLAGS="-L$JAVA_HOME/jre/lib/$OS_ARCH/server"
+    JVMSOPATH=`find $JAVA_HOME/jre/ -name libjvm.so | head -n 1`
+    JNI_LDFLAGS="$JNI_LDFLAGS -L`dirname $JVMSOPATH`"
+  fi
 fi
+cflags_bak=$CFLAGS
 ldflags_bak=$LDFLAGS
 LDFLAGS="$LDFLAGS $JNI_LDFLAGS"
+CFLAGS="$CFLAGS $JNI_CFLAGS"
 AC_CHECK_LIB([jvm], [JNI_GetCreatedJavaVMs])
 LDFLAGS=$ldflags_bak
+CFLAGS=$cflags_bak
 AC_SUBST([JNI_LDFLAGS])
+AC_SUBST([JNI_CFLAGS])
 
 # Checks for header files.
 dnl Check for Ansi C headers
@@ -99,7 +109,7 @@ AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h], [], AC_MSG_ERROR(Some sys
 AC_C_CONST
 
 # Checks for library functions.
-AC_CHECK_FUNCS([memset])
+AC_CHECK_FUNCS([getgrouplist memset])
 
 # Check for nonstandard STRERROR_R
 AC_FUNC_STRERROR_R

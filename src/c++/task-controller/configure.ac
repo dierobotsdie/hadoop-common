@@ -41,7 +41,7 @@ AC_PROG_LIBTOOL
 
 # Checks for header files.
 AC_LANG(C)
-AC_CHECK_HEADERS([unistd.h],[sys/syslimits.h])
+AC_CHECK_HEADERS([unistd.h sys/syslimits.h mach-o/dyld.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
