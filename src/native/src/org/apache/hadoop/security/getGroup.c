@@ -26,6 +26,7 @@
 #define MAX(a, b) (a > b ? a : b)
 /*Helper functions for the JNI implementation of unix group mapping service*/
 
+#ifdef HAVE_GETGROUPLIST
 
 /**
  * Gets the group IDs for a given user. The groups argument is allocated
@@ -66,6 +67,69 @@ int getGroupIDList(const char *user, int *ngroups, gid_t **groups) {
   free(pwbuf);
   return 0;
 }
+
+#else
+
+int getGroupIDList(const char *user, int *ngroups, gid_t **groups) {
+  int getPW(const char *user, char **pwbuf);
+  struct group *gp;
+  int found=0;
+  int i=0;
+  int ng;
+  *ngroups = 0;
+  char *pwbuf = NULL;
+  *groups = NULL;
+  /*Look up the password database first*/
+  int error = getPW(user, &pwbuf);
+  if (error != 0) {
+    if (pwbuf != NULL) {
+       free(pwbuf);
+     }
+    return error;
+  }
+  struct passwd *pw = (struct passwd*)pwbuf;
+
+  int maxposix=sysconf(_SC_NGROUPS_MAX);
+  gid_t *gps = (gid_t *) malloc(maxposix * sizeof (gid_t));
+  if (!gps) {
+    *ngroups = 0;
+    free(pwbuf);
+    return ENOMEM;
+   }
+
+  /* pre-load the first group...
+     this also means that at this point, we should
+     always have at least one entry
+  */
+  gps[0]=pw->pw_gid;
+  ng=1;
+
+  setgrent();
+  while ((gp=getgrent()) != NULL) {
+    found=0;
+    for (i=0; i<ng; i++) {
+      /* de-dupe */
+      if (gp->gr_gid == gps[i]) {
+        found=1;
+      }
+    }
+    if (found==0) {
+      for (i=0; gp->gr_mem[i]; i++) {
+        if (!strcmp(gp->gr_mem[i], user)) {
+          if (ng < maxposix) {
+            gps[ng++]= gp->gr_gid;
+          }
+        }
+      }
+    }
+  }
+  endgrent();
+  *ngroups=ng;
+  *groups=gps;
+  free(pwbuf);
+  return(0);
+}
+
 
 /**
  * Gets the group structure for a given group ID. 
@@ -157,12 +221,12 @@ int getPW(const char *user, char **pwbuf) {
 int main(int argc, char **argv) {
   int ngroups;
   gid_t *groups = NULL;
-  char *user = "ddas";
+  char *user = "root";
   if (argc == 2) user = argv[1];
   int error = getGroupIDList(user, &ngroups, &groups);
   if (error != 0) {
-    printf("Couldn't obtain grp for user %s", user);
-    return;
+    printf("Couldn't obtain grp for user %s\n", user);
+    return(1);
   }
   int i;
   for (i = 0; i < ngroups; i++) {
@@ -172,6 +236,6 @@ int main(int argc, char **argv) {
     free(grpbuf);
   }
   free(groups);
-  return 0;
+  return(0);
 }
 #endif
