@@ -1231,9 +1231,9 @@ public class JobClient extends Configured implements MRConstants, Tool  {
 
   private static void downloadProfile(TaskCompletionEvent e
                                       ) throws IOException  {
-    URLConnection connection = 
-      new URL(getTaskLogURL(e.getTaskAttemptId(), e.getTaskTrackerHttp()) + 
-              "&filter=profile").openConnection();
+    URL url =  new URL(getTaskLogURL(e.getTaskAttemptId(), e.getTaskTrackerHttp()) + 
+                 "&filter=profile");
+    URLConnection connection = SecurityUtil.openSecureHttpConnection(url);
     InputStream in = connection.getInputStream();
     OutputStream out = new FileOutputStream(e.getTaskAttemptId() + ".profile");
     IOUtils.copyBytes(in, out, 64 * 1024, true);
