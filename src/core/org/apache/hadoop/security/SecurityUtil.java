@@ -17,6 +17,10 @@
 package org.apache.hadoop.security;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -45,9 +49,6 @@ import org.apache.hadoop.security.token.Token;
 //this will need to be replaced someday when there is a suitable replacement
 import sun.net.dns.ResolverConfiguration;
 import sun.net.util.IPAddressUtil;
-import sun.security.jgss.krb5.Krb5Util;
-import sun.security.krb5.Credentials;
-import sun.security.krb5.PrincipalName;
 
 public class SecurityUtil {
   public static final Log LOG = LogFactory.getLog(SecurityUtil.class);

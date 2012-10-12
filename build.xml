@@ -28,7 +28,7 @@
  
   <property name="Name" value="Hadoop"/>
   <property name="name" value="hadoop"/>
-  <property name="version" value="1.0.3-SNAPSHOT"/>
+  <property name="version" value="1.0.4-SNAPSHOT"/>
   <property name="final.name" value="${name}-${version}"/>
   <property name="test.final.name" value="${name}-test-${version}"/>
   <property name="year" value="2009"/>
@@ -160,7 +160,7 @@
 
   <property name="jdiff.build.dir" value="${build.docs}/jdiff"/>
   <property name="jdiff.xml.dir" value="${lib.dir}/jdiff"/>
-  <property name="jdiff.stable" value="1.0.1"/>
+  <property name="jdiff.stable" value="1.0.2"/>
   <property name="jdiff.stable.javadoc" 
             value="http://hadoop.apache.org/core/docs/r${jdiff.stable}/api/"/>
 
@@ -183,6 +183,7 @@
       <os arch="i486" />
       <os arch="i586" />
       <os arch="i686" />
+      <os arch="x86" />
     </or>
   </condition>
   <property name="jsvc.location" value="http://archive.apache.org/dist/commons/daemon/binaries/1.0.2/linux/commons-daemon-1.0.2-bin-linux-${os-arch}.tar.gz" />
@@ -203,6 +204,9 @@
   <property name="hadoop.conf.dir" value="/etc/hadoop"/>
 
   <!-- end of task-controller properties -->
+       
+  <!-- These args are passed along to FindBugs -->
+  <property name="findbugs.jvmargs" value="-Xmx512M" />
 
   <property name="package.buildroot" value="/tmp/hadoop_package_build_${user.name}"/>
   <property name="package.build.dir" value="/tmp/hadoop_package_build_${user.name}/BUILD"/>
@@ -1255,7 +1259,7 @@
 
     <findbugs home="${findbugs.home}" output="xml:withMessages"
         outputFile="${findbugs.report.xmlfile}" effort="max"
-        excludeFilter="${findbugs.exclude.file}" jvmargs="-Xmx512M">
+        excludeFilter="${findbugs.exclude.file}" jvmargs="${findbugs.jvmargs}">
       <auxClasspath>
         <fileset dir="${lib.dir}">
           <include name="**/*.jar"/>
@@ -2149,7 +2153,7 @@
   </target>
 
   <target name="compile-c++" 
-          depends="compile-c++-pipes"/>
+          depends="create-c++-configure,compile-c++-pipes"/>
 
   <target name="create-c++-examples-pipes-makefile" 
           depends="check-c++-makefiles" 
