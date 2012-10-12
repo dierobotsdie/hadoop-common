@@ -40,7 +40,7 @@ public class NativeCodeLoader {
     LOG.debug("Trying to load the custom-built native-hadoop library...");
     try {
       System.loadLibrary("hadoop");
-      LOG.info("Loaded the native-hadoop library");
+      LOG.debug("Loaded the native-hadoop library");
       nativeCodeLoaded = true;
     } catch (Throwable t) {
       // Ignore failure to load

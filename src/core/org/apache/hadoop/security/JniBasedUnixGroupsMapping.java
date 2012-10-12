@@ -43,7 +43,7 @@ public class JniBasedUnixGroupsMapping implements GroupMappingServiceProvider {
       LOG.info("Bailing out since native library couldn't be loaded");
       throw new RuntimeException();
     }
-    LOG.info("Using JniBasedUnixGroupsMapping for Group resolution");
+    LOG.debug("Using JniBasedUnixGroupsMapping for Group resolution");
   }
 
   @Override
