@@ -118,7 +118,8 @@ class QueueManager {
         LOG.error("The queue, " + name + " does not have a configured ACL list");
       }
       queues.put(name, new Queue(name, getQueueAcls(name, conf),
-          getQueueState(name, conf), QueueMetrics.create(name, conf)));
+          getQueueState(name, conf), QueueMetrics.create(name, conf),
+          conf.getLong("mapred.queue."+name+".task-wallclock-limit",0)));
     }
     
     return queues;
@@ -146,6 +147,18 @@ class QueueManager {
   public synchronized Queue getQueue(String queueName) {
     return queues.get(queueName);
   }
+
+  /**
+   * Return the length of wall clock time that a task is
+   * allowed to execute in a given queue.
+   *
+   * @param queueName Queue on which the operation needs to be performed.
+   *
+   * @return time in seconds before task attempts should be killed.
+   */
+   public synchronized long getTaskWallClockLimit(String queueName) {
+     return queues.get(queueName).getTaskWallClockLimit();
+   }
 
   /**
    * Return true if the given user is part of the ACL for the given

@@ -2694,7 +2694,7 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
 
     public synchronized long getQueueTimeLimit() {
     	String queueName=localJobConf.getQueueName();
-        return localJobConf.getLong("mapred.queue."+queueName+".task-time-limit",0);
+        return task.getQueueTaskWallClockLimit();
     }
 
 

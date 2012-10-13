@@ -3399,6 +3399,9 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
         }
         if (tasks != null) {
           for (Task task : tasks) {
+            QueueManager qm = getQueueManager();
+            String queueName = task.getConf().get("mapred.job.queue.name");
+            task.setQueueTaskWallClockLimit(qm.getTaskWallClockLimit(queueName));
             expireLaunchingTasks.addNewTask(task.getTaskID());
             if(LOG.isDebugEnabled()) {
               LOG.debug(trackerName + " -> LaunchTask: " + task.getTaskID());

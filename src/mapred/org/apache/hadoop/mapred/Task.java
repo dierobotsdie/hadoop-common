@@ -150,6 +150,7 @@ abstract public class Task implements Writable, Configurable {
   
   private ResourceCalculatorPlugin resourceCalculator = null;
   private long initCpuCumulativeTime = 0;
+  private long queueTaskWallClockLimit = 0;
 
   protected JobConf conf;
   protected MapOutputFile mapOutputFile = new MapOutputFile();
@@ -301,6 +302,20 @@ abstract public class Task implements Writable, Configurable {
       System.exit(-1);
     }
   }
+
+  /**
+   * Get the queueTaskWallClockLimit
+   */
+  public long getQueueTaskWallClockLimit() {
+    return queueTaskWallClockLimit;
+  }
+
+  /**
+   * Set the queueTaskWallClockLimit
+   */
+  public void setQueueTaskWallClockLimit(long queueTaskWallClockLimit) {
+    this.queueTaskWallClockLimit = queueTaskWallClockLimit;
+  }
   
   /**
    * Get skipRanges.
@@ -427,6 +442,7 @@ abstract public class Task implements Writable, Configurable {
     out.writeBoolean(writeSkipRecs);
     out.writeBoolean(taskCleanup); 
     Text.writeString(out, user);
+    out.writeLong(queueTaskWallClockLimit);
   }
   
   public void readFields(DataInput in) throws IOException {
@@ -451,6 +467,7 @@ abstract public class Task implements Writable, Configurable {
       setPhase(TaskStatus.Phase.CLEANUP);
     }
     user = Text.readString(in);
+    queueTaskWallClockLimit=in.readLong();
   }
 
   @Override
