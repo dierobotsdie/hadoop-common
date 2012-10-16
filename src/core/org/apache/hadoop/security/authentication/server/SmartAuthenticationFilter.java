@@ -327,11 +327,13 @@ public class SmartAuthenticationFilter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
       throws IOException, ServletException {
+    boolean unauthorizedResponse = true;
+    String unauthorizedMsg = "";
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
+    AuthenticationToken token;
     try {
       boolean newToken = false;
-      AuthenticationToken token;
       try {
         token = getToken(httpRequest);
       }
@@ -350,6 +352,7 @@ public class SmartAuthenticationFilter implements Filter {
         newToken = true;
       }
       if (token != null) {
+        unauthorizedResponse = false;
         if (LOG.isDebugEnabled()) {
           LOG.debug("Request [{}] user [{}] authenticated", getRequestURL(httpRequest), token.getUserName());
         }
@@ -377,17 +380,17 @@ public class SmartAuthenticationFilter implements Filter {
           httpResponse.addCookie(cookie);
         }
         filterChain.doFilter(httpRequest, httpResponse);
-      } else {
-        throw new AuthenticationException("Missing AuthenticationToken");
-      }
     } catch (AuthenticationException ex) {
+      unauthorizedMsg = ex.toString();
+      LOG.warn("Authentication exception: " + ex.getMessage(), ex);
+    }
+    if (unauthorizedResponse) {
       if (!httpResponse.isCommitted()) {
         Cookie cookie = createCookie("");
         cookie.setMaxAge(0);
         httpResponse.addCookie(cookie);
-        httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
+        httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, unauthorizedMsg);
       }
-      LOG.warn("Authentication exception: " + ex.getMessage(), ex);
     }
   }
 
