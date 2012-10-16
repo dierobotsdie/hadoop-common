@@ -402,8 +402,8 @@ public class JobInProgress {
         }});
 
       /** check for the size of the jar **/
-      Path submitJarFile = new Path(jobInfo.getJobSubmitDir() +
-         jobId.toString() + Path.SEPARATOR + "job.jar"); 
+      Path submitJarFile = new Path(jobInfo.getJobSubmitDir() 
+         + Path.SEPARATOR + "job.jar"); 
       FileStatus fstatus = fs.getFileStatus(submitJarFile);
       if (fstatus.getLen() > jobtracker.MAX_JAR_SIZE) {
         throw new IOException("Exceeded max jar size: "
