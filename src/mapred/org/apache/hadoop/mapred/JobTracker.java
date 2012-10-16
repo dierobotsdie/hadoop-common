@@ -167,6 +167,13 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
   // Basically TRACKER_FAULT_TIMEOUT_WINDOW / TRACKER_FAULT_BUCKET_WIDTH .
   private int NUM_FAULT_BUCKETS;
 
+  /** the maximum allowed size of a jar **/
+  long MAX_JAR_SIZE = 100 * 1024 * 1024L;
+  /** the config key for max user jobconf size **/
+  public static final String MAX_USER_JAR_SIZE_KEY =
+      "mapred.user.jar.limit";
+
+
   /** the maximum allowed size of the jobconf **/
   long MAX_JOBCONF_SIZE = 5*1024*1024L;
   /** the config key for max user jobconf size **/
@@ -2221,6 +2228,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
                                        DELEGATION_TOKEN_GC_INTERVAL);
     secretManager.startThreads();
        
+    MAX_JAR_SIZE= conf.getLong(MAX_USER_JAR_SIZE_KEY, MAX_JAR_SIZE);
     MAX_JOBCONF_SIZE = conf.getLong(MAX_USER_JOBCONF_SIZE_KEY, MAX_JOBCONF_SIZE);
     //
     // Grab some static constants
