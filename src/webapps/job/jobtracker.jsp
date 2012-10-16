@@ -95,6 +95,7 @@
   <ul id="quicklinks-list">
     <li><a href="#scheduling_info">Scheduling Info</a></li>
     <li><a href="#running_jobs">Running Jobs</a></li>
+    <li><a href="#failed_jobs">Failed jobs</a></li>
     <li><a href="#retired_jobs">Retired Jobs</a></li>
     <li><a href="#local_logs">Local Logs</a></li>
   </ul>
