@@ -150,14 +150,21 @@ public class WebHdfsFileSystem extends FileSystem
   @Override
   public synchronized void initialize(URI uri, Configuration conf
       ) throws IOException {
+    final String SKIP_SECURITY = "li.disable.webhdfs.security.check";
     super.initialize(uri, conf);
     setConf(conf);
 
     this.nnAddr = NetUtils.createSocketAddr(uri.getAuthority(), getDefaultPort());
     this.workingDir = getHomeDirectory();
 
-    if (UserGroupInformation.isSecurityEnabled()) {
-      initDelegationToken();
+    boolean skipSecurity = conf.getBoolean(SKIP_SECURITY, false);
+
+    if(skipSecurity) {
+        LOG.info("WebHDFS security check disabled, not getting token");
+    } else {
+        if (UserGroupInformation.isSecurityEnabled()) {
+          initDelegationToken();
+        }
     }
   }
 
