@@ -43,6 +43,7 @@ import org.apache.hadoop.filecache.TaskDistributedCacheManager.CacheFile;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.FSError;
 import org.apache.hadoop.fs.LocalDirAllocator;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
@@ -413,8 +414,14 @@ public class TrackerDistributedCacheManager {
       throw new IOException("Mkdirs failed to create directory " + workDir);
     }
     Path workFile = new Path(workDir, parchive.getName());
-    sourceFs.copyToLocalFile(sourcePath, workFile);
+    try {
+      sourceFs.copyToLocalFile(sourcePath, workFile);
+    } catch (FSError e) {
+      localFs.delete(workFile,true);
+      throw e;
+    }
     localFs.setPermission(workFile, permission);
+
     if (isArchive) {
       String tmpArchive = workFile.getName().toLowerCase();
       File srcFile = new File(workFile.toString());
