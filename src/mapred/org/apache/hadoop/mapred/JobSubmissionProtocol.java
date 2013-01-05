@@ -82,8 +82,9 @@ interface JobSubmissionProtocol extends VersionedProtocol {
    * Version 27: Added queue state to JobQueueInfo as part of HADOOP-5913.
    * Version 28: Added a new field to JobStatus to provide user readable 
    *             information on job failure. MAPREDUCE-1521.
+   * Version 29: LI-forcing function / Job Jar sizing
    */
-  public static final long versionID = 28L;
+  public static final long versionID = 29L;
 
   /**
    * Allocate a name for the job.
