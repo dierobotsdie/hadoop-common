@@ -50,7 +50,11 @@ abstract public class Shell {
   /** a Unix command to get a given user's groups list */
   public static String[] getGroupsForUserCommand(final String user) {
     //'groups username' command return is non-consistent across different unixes
-    return new String [] {"bash", "-c", "id -Gn " + user};
+    if (System.getProperty("os.name").equals("SunOS")) {
+      return new String [] {"bash", "-c", "/usr/xpg4/bin/id -Gn " + user};  
+    } else {
+      return new String [] {"bash", "-c", "id -Gn " + user};
+    }
   }
   /** a Unix command to get a given netgroup's user list */
   public static String[] getUsersForNetgroupCommand(final String netgroup) {
