@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.security.KerberosInfo;
+import org.apache.hadoop.security.KerberosName;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -96,7 +97,19 @@ public class ServiceAuthorizationManager {
         }
       }
     }
-    if((clientPrincipal != null && !clientPrincipal.equals(user.getUserName())) || 
+    // when authorizing use the short name only
+    String shortName = clientPrincipal;
+    if(clientPrincipal != null ) {
+      try {
+        shortName = new KerberosName(clientPrincipal).getShortName();
+      } catch (IOException e) {
+        LOG.warn("couldn't get short name from " + clientPrincipal, e);
+        // just keep going
+      }
+    }
+    LOG.debug("for protocol authorization compare (" + clientPrincipal + "): " 
+        + shortName + " with " + user.getShortUserName());
+    if((shortName != null &&  !shortName.equals(user.getShortUserName())) || 
         !acl.isUserAllowed(user)) {
       AUDITLOG.warn(AUTHZ_FAILED_FOR + user + " for protocol=" + protocol
           + ", expected client Kerberos principal is " + clientPrincipal);
