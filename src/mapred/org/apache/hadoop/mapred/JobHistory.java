@@ -129,7 +129,7 @@ public class JobHistory {
   final static FsPermission HISTORY_DIR_PERMISSION =
     FsPermission.createImmutable((short) 0755); // rwxr-xr-x
   final static FsPermission HISTORY_FILE_PERMISSION =
-    FsPermission.createImmutable((short) 0744); // rwxr--r--
+    FsPermission.createImmutable((short) 0644); // rw-r--r--
   private static FileSystem LOGDIR_FS; // log dir filesystem
   private static FileSystem DONEDIR_FS; // Done dir filesystem
   private static JobConf jtConf;
