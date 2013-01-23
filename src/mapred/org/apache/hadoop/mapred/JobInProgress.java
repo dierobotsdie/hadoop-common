@@ -401,13 +401,17 @@ public class JobInProgress {
           return jobSubmitDir.getFileSystem(default_conf);
         }});
 
-      /** check for the size of the jar **/
-      Path submitJarFile = new Path(jobInfo.getJobSubmitDir() 
-         + Path.SEPARATOR + "job.jar"); 
-      FileStatus fstatus = fs.getFileStatus(submitJarFile);
-      if (fstatus.getLen() > jobtracker.MAX_JAR_SIZE) {
-        throw new IOException("Exceeded max jar size: "
+      // check for the size of the jar 
+      // MiniMR does bad things here, so we need to ignore it
+      // if the file doesn't actaully exist
+      Path submitJarFile = new Path(jobInfo.getJobSubmitDir()
+         + Path.SEPARATOR + "job.jar");
+      if (fs.exists(submitJarFile)) {
+        FileStatus fstatus = fs.getFileStatus(submitJarFile);
+        if (fstatus.getLen() > jobtracker.MAX_JAR_SIZE) {
+          throw new IOException("Exceeded max jar size: "
             + fstatus.getLen() + " limit: " + jobtracker.MAX_JAR_SIZE);
+        }
       }
       
       /** check for the size of jobconf **/
