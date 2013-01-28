@@ -407,16 +407,16 @@ public class JobInProgress {
       Path submitJarFile = new Path(jobInfo.getJobSubmitDir()
          + Path.SEPARATOR + "job.jar");
       if (fs.exists(submitJarFile)) {
-        FileStatus fstatus = fs.getFileStatus(submitJarFile);
-        if (fstatus.getLen() > jobtracker.MAX_JAR_SIZE) {
+        FileStatus fjstatus = fs.getFileStatus(submitJarFile);
+        if (fjstatus.getLen() > jobtracker.MAX_JAR_SIZE) {
           throw new IOException("Exceeded max jar size: "
-            + fstatus.getLen() + " limit: " + jobtracker.MAX_JAR_SIZE);
+            + fjstatus.getLen() + " limit: " + jobtracker.MAX_JAR_SIZE);
         }
       }
       
       /** check for the size of jobconf **/
       Path submitJobFile = JobSubmissionFiles.getJobConfPath(jobSubmitDir);
-      fstatus = fs.getFileStatus(submitJobFile);
+      FileStatus fstatus = fs.getFileStatus(submitJobFile);
       if (fstatus.getLen() > jobtracker.MAX_JOBCONF_SIZE) {
         throw new IOException("Exceeded max jobconf size: " 
             + fstatus.getLen() + " limit: " + jobtracker.MAX_JOBCONF_SIZE);
