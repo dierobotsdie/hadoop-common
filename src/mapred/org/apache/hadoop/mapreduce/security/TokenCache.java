@@ -88,6 +88,10 @@ public class TokenCache {
     String delegTokenRenewer = jtKrbName.getShortName();
     boolean readFile = true;
     for(Path p: ps) {
+      if(p.toString().toLowerCase().startsWith("webhdfs://") && conf.getBoolean("li.disable.webhdfs.security.check", false)) {
+        LOG.info("WebHDFS security check disabled, not getting tokens for path: " + p);
+        continue;
+      }
       FileSystem fs = FileSystem.get(p.toUri(), conf);
       String fsName = fs.getCanonicalServiceName();
       if (fsName == null) {
