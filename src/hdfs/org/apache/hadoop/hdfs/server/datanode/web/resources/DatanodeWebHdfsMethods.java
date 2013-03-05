@@ -48,7 +48,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.MD5MD5CRC32FileChecksum;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DFSClient;
-import org.apache.hadoop.hdfs.DFSClient.DFSDataInputStream;
+import org.apache.hadoop.hdfs.DFSClient.DFSInputStream;
 import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
@@ -326,33 +326,34 @@ public class DatanodeWebHdfsMethods {
     final Configuration conf = new Configuration(datanode.getConf());
     final InetSocketAddress nnRpcAddr = NameNode.getAddress(conf);
 
+    long contentLength = 0;
     switch(op.getValue()) {
     case OPEN:
     {
       final int b = bufferSize.getValue(conf);
       final DFSClient dfsclient = new DFSClient(nnRpcAddr, conf);
-      DFSDataInputStream in = null;
+      DFSInputStream in = null;
       try {
-        in = new DFSClient.DFSDataInputStream(
-        dfsclient.open(fullpath, b, true, null));
+    	in = dfsclient.open(fullpath, b, true, null);
         in.seek(offset.getValue());
       } catch(IOException ioe) {
         IOUtils.cleanup(LOG, in);
         IOUtils.cleanup(LOG, dfsclient);
         throw ioe;
       }
-      final DFSDataInputStream dis = in;
+      final DFSInputStream dis = in;
+      contentLength = dis.getFileLength();
       final StreamingOutput streaming = new StreamingOutput() {
         @Override
         public void write(final OutputStream out) throws IOException {
           final Long n = length.getValue();
-          DFSDataInputStream dfsin = dis;
+          DFSInputStream dfsin = dis;
           DFSClient client = dfsclient;
           try {
             if (n == null) {
-              IOUtils.copyBytes(dfsin, out, b);
+              IOUtils.copyBytes(dfsin, out, 4096);
             } else {
-              IOUtils.copyBytes(dfsin, out, n, b, false);
+              IOUtils.copyBytes(dfsin, out, n, 4096, false);
             }
             dfsin.close();
             dfsin = null;
@@ -365,8 +366,8 @@ public class DatanodeWebHdfsMethods {
         }
       };
 
-      return Response.ok(streaming).type(
-          MediaType.APPLICATION_OCTET_STREAM).build();
+      return Response.ok(streaming).header("Content-Length", ""+contentLength).type(
+    		  MediaType.APPLICATION_OCTET_STREAM).build();
     }
     case GETFILECHECKSUM:
     {

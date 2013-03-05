@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.hdfs.server.namenode.StreamFile;
 
@@ -104,10 +105,15 @@ public abstract class ByteRangeInputStream extends FSInputStream {
       final HttpURLConnection connection = opener.openConnection(startPos);
       connection.connect();
       checkResponseCode(connection);
-
-      final String cl = connection.getHeaderField(StreamFile.CONTENT_LENGTH);
-      filelength = (cl == null) ? -1 : Long.parseLong(cl);
       in = connection.getInputStream();
+      final String cl = connection.getHeaderField(StreamFile.CONTENT_LENGTH);
+      if (cl != null){
+    	  long streamlength = (cl == null) ? -1 : Long.parseLong(cl);
+    	  filelength = startPos + streamlength;
+    	  // Java has a bug with >2GB request streams.  It won't bounds check
+    	  // the reads so the transfer blocks until the server times out
+    	  in = new BoundedInputStream(connection.getInputStream(), streamlength);
+      }
 
       resolvedURL.setURL(getResolvedUrl(connection));
       status = StreamStatus.NORMAL;
@@ -116,20 +122,24 @@ public abstract class ByteRangeInputStream extends FSInputStream {
     return in;
   }
   
-  private void update(final boolean isEOF, final int n)
+  private int update(final int n)
       throws IOException {
-    if (!isEOF) {
+    if (n != -1) {
       currentPos += n;
     } else if (currentPos < filelength) {
       throw new IOException("Got EOF but currentPos = " + currentPos
           + " < filelength = " + filelength);
     }
+    return n;
   }
 
   public int read() throws IOException {
-    final int b = getInputStream().read();
-    update(b == -1, 1);
-    return b;
+    return update(getInputStream().read());
+  }
+  
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException{
+	return update(getInputStream().read(b, off, len));
   }
   
   /**
