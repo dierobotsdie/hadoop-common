@@ -134,7 +134,9 @@ public abstract class ByteRangeInputStream extends FSInputStream {
   }
 
   public int read() throws IOException {
-    return update(getInputStream().read());
+    int b = getInputStream().read();
+    update((b == -1) ? -1 : 1);
+    return b;
   }
   
   @Override
