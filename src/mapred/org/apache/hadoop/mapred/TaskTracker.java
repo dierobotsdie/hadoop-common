@@ -1718,9 +1718,11 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
             }
           }
         }
-        markQueueTimeLimitTasks();
         markUnresponsiveTasks();
+        markUserTimeLimitTasks();
+        markQueueTimeLimitTasks();
         killOverflowingTasks();
+
             
         //we've cleaned up, resume normal operation
         if (!acceptNewTasks && isIdle()) {
@@ -2044,6 +2046,47 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
       }
     }
   }
+
+  /**
+   * Kill any tasks that violate any user requested timeout limits.
+   */
+  private synchronized void markUserTimeLimitTasks() throws IOException {
+    long now = System.currentTimeMillis();
+    for (TaskInProgress tip: runningTasks.values()) {
+      if (tip.getRunState() == TaskStatus.State.RUNNING ||
+          tip.getRunState() == TaskStatus.State.COMMIT_PENDING ||
+          tip.isCleaningup()) {
+
+        // Check the per-job timeout interval for tasks;
+        // an interval of '0' implies it is never timed-out
+
+        long userTaskTimeout = 0;
+        if (tip.getTask().getPhase() == TaskStatus.Phase.MAP) {
+           userTaskTimeout = tip.getUserMapTimeLimit();
+        } else {
+	   userTaskTimeout = tip.getUserReduceTimeLimit();
+        }
+	
+        if (userTaskTimeout == 0) {
+          continue;
+        }
+        // Check if the task is over the time limit
+        long execTime = now - tip.getStatus().getStartTime();
+        execTime=execTime/1000;
+        if (execTime > userTaskTimeout && !tip.wasKilled) {
+          String msg =
+            "Task " + tip.getTask().getTaskID() + " is over the user requested time limit of "
+            + userTaskTimeout + " seconds. Killing!";
+          LOG.info(tip.getTask().getTaskID() + ": " + msg);
+          ReflectionUtils.logThreadInfo(LOG, "task running too long", 30);
+          tip.reportDiagnosticInfo(msg);
+          myInstrumentation.timedoutTask(tip.getTask().getTaskID());
+          purgeTask(tip, true);
+        }
+      }
+    }
+  }
+
 
     
   /**
@@ -2693,8 +2736,30 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
 
 
     public synchronized long getQueueTimeLimit() {
-    	String queueName=localJobConf.getQueueName();
-        return task.getQueueTaskWallClockLimit();
+      return task.getQueueTaskWallClockLimit();
+    }
+
+
+    // under certain conditions, localJobConf may not be
+    // created by the time we're called. It's safe to
+    // tell the TaskTracker that we're zero for now
+    // and correct it later.  Worse case, we run
+    // a few seconds longer than we were supposed to.
+    public synchronized long getUserMapTimeLimit() {
+      if (localJobConf == null) {
+        return(0);
+      } else {
+        return localJobConf.getLong("mapred.job.map.task-wallclock-limit",0);
+      }        
+    }
+
+
+    public synchronized long getUserReduceTimeLimit() {
+      if (localJobConf == null) {
+        return(0);
+      } else {
+        return localJobConf.getLong("mapred.job.reduce.task-wallclock-limit",0);
+      }
     }
 
 
